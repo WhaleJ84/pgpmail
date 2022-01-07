@@ -8,22 +8,68 @@ set -e
 
 usage(){
     cat << EOF
-Usage: pgpmail [OPTION]... RECIPIENT ...
+Usage: pgpmail [OPTION] -f FILE... -r RECIPIENT
+
+REQUIRED:
+    -f FILE     Path to file to include in email as attachment
+    -r TO       Recipient of email
 
 OPTIONS:
-    -f FILE File to send as attachment in email
-    -h      Display this message and exit
+    -h          Display this message and exit
+    -s FROM         Sender of email
 EOF
+    exit 0
 }
 
-ATTACHMENTS=""  # Empty list
+verify_files(){
+    if [ ! "$FILES" ]; then
+        echo "$0: no files specified"
+        usage
+    else
+        for file in $FILES; do
+            if [ ! -f "$file" ]; then
+                echo "$0: '$file' not found"
+                usage
+            fi
+        done
+    fi
+}
 
-while getopts f:h arg; do
+send_email(){
+    # TODO: Write documentation about following error:
+    #
+    # send-mail: fatal: open /etc/postfix/main.cf: No such file or directory
+    # Can't send mail: sendmail process failed with error code 75
+    #
+    # For me, `postfix` wasn't setup properly.
+    [ ! "$(command -v mail 2>/dev/null)" ] && echo "$0: mailutils is not installed" && exit 1
+    [ ! "$RECIPIENT" ] && echo "$0: no recipient specified" && usage
+    if [ "$SENDER" ]; then
+        echo "test" | mail \
+            -s "$SUBJECT" \
+            -r "$SENDER" \
+            "$RECIPIENT"
+    else
+        echo "test" | mail \
+            -s "$SUBJECT" \
+            "$RECIPIENT"
+    fi
+}
+
+FILES=""  # Empty list
+SUBJECT="$(date) pgpmail"
+
+while getopts f:hr:s: arg; do
     case "$arg" in
-        f) ATTACHMENTS="${ATTACHMENTS} $OPTARG";;
-        h) usage && exit 0 ;;
-        *) usage && exit 0 ;;
+        f) FILES="${FILES} $OPTARG" ;;
+        h) usage ;;
+        r) RECIPIENT="$OPTARG" ;;
+        s) SENDER="$OPTARG" ;;
+        ?) usage ;;
     esac
 done
 
-ATTACHMENTS="${ATTACHMENTS#?}"
+FILES="${FILES#?}"
+
+#verify_files
+send_email
