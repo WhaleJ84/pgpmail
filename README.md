@@ -1,4 +1,4 @@
 # PGPmail
 
-A shell script used to hash files for integrity, encrypt them, and email them to a recipient.
+A shell script using GPG/PGP to hash files for integrity, encrypt them, and email them to a recipient.
 
