@@ -4,7 +4,6 @@ set -e
 
 #    -c      Include hash values of files in email
 #    -e      Encrypt files with recipient's GPG key
-#    -f FILE File to send as attachment in email
 #    -s FROM Specifies the sending address of the email
 
 usage(){
@@ -12,13 +11,19 @@ usage(){
 Usage: pgpmail [OPTION]... RECIPIENT ...
 
 OPTIONS:
+    -f FILE File to send as attachment in email
     -h      Display this message and exit
 EOF
 }
 
-while getopts h arg; do
+ATTACHMENTS=""  # Empty list
+
+while getopts f:h arg; do
     case "$arg" in
+        f) ATTACHMENTS="${ATTACHMENTS} $OPTARG";;
         h) usage && exit 0 ;;
         *) usage && exit 0 ;;
     esac
 done
+
+ATTACHMENTS="${ATTACHMENTS#?}"
