@@ -2,7 +2,6 @@
 
 set -e
 
-#    -e      Encrypt files with recipient's GPG key
 
 usage(){
     cat << EOF
@@ -14,8 +13,9 @@ REQUIRED:
 
 OPTIONS:
     -c          Include checksum of files in email
+    -e          Encrypt files with recipient's GPG key
     -h          Display this message and exit
-    -s FROM         Sender of email
+    -s FROM     Sender of email
 EOF
     exit 0
 }
@@ -31,6 +31,7 @@ verify_files(){
 }
 
 generate_attachments(){
+    # Creates list of args to attach each file
     for file in $1; do
         ATTACHMENTS="${ATTACHMENTS} -A $file"
     done
@@ -45,27 +46,43 @@ hash_files(){
     HASHES="${HASHES#?}"
 }
 
+encrypt_attachments(){
+    # generates encrypted versions of the files to attach
+    [ ! "$(command -v gpg 2>/dev/null)" ] && echo "$0: gpg is not installed" && exit 1
+    for file in $FILES; do
+	gpg --encrypt --armor -r $RECIPIENT --yes $file
+        ENCRYPTED="${ENCRYPTED} $file.asc"
+    done
+    ENCRYPTED="${ENCRYPTED#?}"
+}
+
 send_email(){
-    # TODO: Write documentation about following error:
-    #
-    # send-mail: fatal: open /etc/postfix/main.cf: No such file or directory
-    # Can't send mail: sendmail process failed with error code 75
-    #
-    # For me, `postfix` wasn't setup properly.
     [ ! "$(command -v mail 2>/dev/null)" ] && echo "$0: mailutils is not installed" && exit 1
     [ ! "$RECIPIENT" ] && echo "$0: no recipient specified" && usage
+
+
     [ "$HASH" ] && hash_files; echo "$HASHES" | mail \
         -s "$SUBJECT" \
         `[ "$SENDER" ] && echo  " -r $SENDER"` \
-        `[ "$FILES" ] && verify_files && generate_attachments "$FILES" && echo "$ATTACHMENTS"` \
+        `if [ "$FILES" ]; then
+                verify_files
+                if [ "$ENCRYPT" ]; then
+            	    encrypt_attachments
+            	    generate_attachments "$ENCRYPTED"
+                else
+            	    generate_attachments "$FILES"
+                fi
+        	echo "$ATTACHMENTS"
+        fi` \
         "$RECIPIENT" 
 }
 
 SUBJECT="$(date) pgpmail"
 
-while getopts cf:hr:s: arg; do
+while getopts cef:hr:s: arg; do
     case "$arg" in
         c) HASH=1 ;;
+        e) ENCRYPT=1 ;;
         f) FILES="${FILES} $OPTARG" ;;
         h) usage ;;
         r) RECIPIENT="$OPTARG" ;;
@@ -76,6 +93,4 @@ done
 
 FILES="${FILES#?}"
 
-generate_attachments "$FILES"
-echo "$ATTACHMENTS"
-#send_email
+send_email
