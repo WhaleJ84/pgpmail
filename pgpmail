@@ -2,19 +2,18 @@
 
 set -e
 
-#    -c      Include hash values of files in email
 #    -e      Encrypt files with recipient's GPG key
-#    -s FROM Specifies the sending address of the email
 
 usage(){
     cat << EOF
-Usage: pgpmail [OPTION] -f FILE... -r RECIPIENT
+Usage: pgpmail [OPTION]... -f FILE... -r RECIPIENT
 
 REQUIRED:
     -f FILE     Path to file to include in email as attachment
     -r TO       Recipient of email
 
 OPTIONS:
+    -c          Include hash values of files in email
     -h          Display this message and exit
     -s FROM         Sender of email
 EOF
@@ -44,16 +43,11 @@ send_email(){
     # For me, `postfix` wasn't setup properly.
     [ ! "$(command -v mail 2>/dev/null)" ] && echo "$0: mailutils is not installed" && exit 1
     [ ! "$RECIPIENT" ] && echo "$0: no recipient specified" && usage
-    if [ "$SENDER" ]; then
-        echo "test" | mail \
-            -s "$SUBJECT" \
-            -r "$SENDER" \
-            "$RECIPIENT"
-    else
-        echo "test" | mail \
-            -s "$SUBJECT" \
-            "$RECIPIENT"
-    fi
+    echo "test" | mail \
+        -s "$SUBJECT" \
+        `[ "$SENDER" ] && echo  " -r $SENDER"` \
+        `[ "$FILES" ] && verify_files && for FILE in "$FILES"; do echo "-A $FILE"; done` \
+        "$RECIPIENT"
 }
 
 FILES=""  # Empty list
@@ -71,5 +65,4 @@ done
 
 FILES="${FILES#?}"
 
-#verify_files
 send_email
