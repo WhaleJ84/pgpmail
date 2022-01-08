@@ -31,7 +31,7 @@ verify_files(){
 }
 
 generate_attachments(){
-    for file in $FILES; do
+    for file in $1; do
         ATTACHMENTS="${ATTACHMENTS} -A $file"
     done
     ATTACHMENTS="${ATTACHMENTS#?}"
@@ -57,7 +57,7 @@ send_email(){
     [ "$HASH" ] && hash_files; echo "$HASHES" | mail \
         -s "$SUBJECT" \
         `[ "$SENDER" ] && echo  " -r $SENDER"` \
-        `[ "$FILES" ] && verify_files && generate_attachments && echo "$ATTACHMENTS"` \
+        `[ "$FILES" ] && verify_files && generate_attachments "$FILES" && echo "$ATTACHMENTS"` \
         "$RECIPIENT" 
 }
 
@@ -76,4 +76,6 @@ done
 
 FILES="${FILES#?}"
 
-send_email
+generate_attachments "$FILES"
+echo "$ATTACHMENTS"
+#send_email
