@@ -5,17 +5,19 @@ set -e
 
 usage(){
     cat << EOF
-Usage: pgpmail [OPTION]... -f FILE... -r RECIPIENT
+Usage: pgpmail [OPTION]... -a FILE... -t RECIPIENT
+Encrypt attachments and sign checksums to email recipients using GPG keys.
 
 REQUIRED:
-    -f FILE     Path to file to include in email as attachment
-    -r TO       Recipient of email
+    -a FILE     File to include in email as attachment
+    -t TO       Recipient of email
 
 OPTIONS:
     -c          Include checksum of files in email
     -e          Encrypt files with recipient's GPG key
     -h          Display this message and exit
-    -s FROM     Sender of email
+    -f FROM     Sender of email
+    -s          Sign checksum with sender's GPG key
 EOF
     exit 0
 }
@@ -56,12 +58,21 @@ encrypt_attachments(){
     ENCRYPTED="${ENCRYPTED#?}"
 }
 
+sign_checksum(){
+    [ ! "$(command -v gpg 2>/dev/null)" ] && echo "$0: gpg is not installed" && exit 1
+    [ ! "$SENDER" ] && echo "$0: no sender specified" && usage
+    [ ! "$HASH" ] && echo "$0: no checksum specified" && usage
+    HASHES="$(echo $HASHES | gpg --armor --clearsign)"
+}
+
 send_email(){
     [ ! "$(command -v mail 2>/dev/null)" ] && echo "$0: mailutils is not installed" && exit 1
     [ ! "$RECIPIENT" ] && echo "$0: no recipient specified" && usage
 
+    [ "$HASH" ] && hash_files
+    [ "$SIGN" ] && sign_checksum
 
-    [ "$HASH" ] && hash_files; echo "$HASHES" | mail \
+    echo "$HASHES" | mail \
         -s "$SUBJECT" \
         `[ "$SENDER" ] && echo  " -r $SENDER"` \
         `if [ "$FILES" ]; then
@@ -79,14 +90,15 @@ send_email(){
 
 SUBJECT="$(date) pgpmail"
 
-while getopts cef:hr:s: arg; do
+while getopts a:cef:hst: arg; do
     case "$arg" in
+        a) FILES="${FILES} $OPTARG" ;;
         c) HASH=1 ;;
         e) ENCRYPT=1 ;;
-        f) FILES="${FILES} $OPTARG" ;;
+        f) SENDER="$OPTARG" ;;
         h) usage ;;
-        r) RECIPIENT="$OPTARG" ;;
-        s) SENDER="$OPTARG" ;;
+        s) SIGN=1 ;;
+        t) RECIPIENT="$OPTARG" ;;
         ?) usage ;;
     esac
 done
