@@ -13,7 +13,7 @@ REQUIRED:
     -r TO       Recipient of email
 
 OPTIONS:
-    -c          Include hash values of files in email
+    -c          Include checksum of files in email
     -h          Display this message and exit
     -s FROM         Sender of email
 EOF
@@ -21,17 +21,28 @@ EOF
 }
 
 verify_files(){
-    if [ ! "$FILES" ]; then
-        echo "$0: no files specified"
-        usage
-    else
-        for file in $FILES; do
-            if [ ! -f "$file" ]; then
-                echo "$0: '$file' not found"
-                usage
-            fi
-        done
-    fi
+    # Verifies the files specified are indeed files
+    for file in $FILES; do
+        if [ ! -f "$file" ]; then
+            echo "$0: '$file' not found"
+            usage
+        fi
+    done
+}
+
+generate_attachments(){
+    for file in $FILES; do
+        ATTACHMENTS="${ATTACHMENTS} -A $file"
+    done
+    ATTACHMENTS="${ATTACHMENTS#?}"
+}
+
+hash_files(){
+    # Loops through every file specified and appends a hash for each to a list
+    for FILE in "$FILES"; do
+        HASHES="${HASHES} $(sha256sum $FILE)"
+    done
+    HASHES="${HASHES#?}"
 }
 
 send_email(){
@@ -43,18 +54,18 @@ send_email(){
     # For me, `postfix` wasn't setup properly.
     [ ! "$(command -v mail 2>/dev/null)" ] && echo "$0: mailutils is not installed" && exit 1
     [ ! "$RECIPIENT" ] && echo "$0: no recipient specified" && usage
-    echo "test" | mail \
+    [ "$HASH" ] && hash_files; echo "$HASHES" | mail \
         -s "$SUBJECT" \
         `[ "$SENDER" ] && echo  " -r $SENDER"` \
-        `[ "$FILES" ] && verify_files && for FILE in "$FILES"; do echo "-A $FILE"; done` \
-        "$RECIPIENT"
+        `[ "$FILES" ] && verify_files && generate_attachments && echo "$ATTACHMENTS"` \
+        "$RECIPIENT" 
 }
 
-FILES=""  # Empty list
 SUBJECT="$(date) pgpmail"
 
-while getopts f:hr:s: arg; do
+while getopts cf:hr:s: arg; do
     case "$arg" in
+        c) HASH=1 ;;
         f) FILES="${FILES} $OPTARG" ;;
         h) usage ;;
         r) RECIPIENT="$OPTARG" ;;
