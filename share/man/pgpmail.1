@@ -1,0 +1,53 @@
+.TH PGPMAIL 1 "09 Jan 2022" "1.0.1" "User Commands"
+.SH NAME
+pgpmail \- Encrypt attachments and sign checksums to email recipients using GPG keys
+.SH SYNOPSIS
+.SY pgpmail 
+.OP -ces
+.OP -f SENDER
+.OP -a FILE\~ .\|.\|.
+.OP -t RECIPIENT
+.YS
+.SH DESCRIPTION
+A shell script using GPG/PGP to hash files for integrity, encrypt them, and email them to a recipient.
+.SH OPTIONS
+.PP
+.B -a FILE
+File to include in email as attachment
+.PP
+.B -c
+Include checksum of files in email
+.PP
+.B -e
+Encrypt files with recipient's GPG key
+.PP
+.B -f FROM
+Sender of email
+.PP
+.B -h
+Display this message and exit
+.PP
+.B -s
+Sign checksum with sender's GPG key
+.PP
+.B -t TO
+Recipient of email
+.SH EXAMPLE
+The following command will attach a file called `documents.zip' and the checksum of the files in an email to `manager@example.com'.
+As no sender is specified, the from address will use the system details.
+.EX
+.B pgpmail -ca documents.zip -t manager@example.com
+.EE
+.SH BUGS
+.SS Reporting Bugs
+Report any found bugs to
+.UR https://github.com/WhaleJ84/pgpmail/issues
+.UE
+.SS Known bugs
+No known bugs.
+.SH SEE ALSO
+gpg(1), mail(1)
+.SH AUTHOR
+James Whale
+.MT james@james-whale.com
+.ME
