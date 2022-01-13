@@ -15,8 +15,8 @@ REQUIRED:
 OPTIONS:
     -c          Include checksum of files in email
     -e          Encrypt files with recipient's GPG key
-    -h          Display this message and exit
     -f FROM     Sender of email
+    -h          Display this message and exit
     -s          Sign checksum with sender's GPG key
 EOF
     exit 0
@@ -42,8 +42,8 @@ generate_attachments(){
 
 hash_files(){
     # Loops through every file specified and appends a hash for each to a list
-    for FILE in "$FILES"; do
-        HASHES="${HASHES} $(sha256sum $FILE)"
+    for file in "$FILES"; do
+        HASHES="${HASHES} $(sha256sum $file)"
     done
     HASHES="${HASHES#?}"
 }
