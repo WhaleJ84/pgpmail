@@ -6,15 +6,22 @@ A shell script using GPG/PGP to hash files for integrity, encrypt them, and emai
 
 The script has the following dependencies:
 
+**Required**
 - `gpg`
 - `mail`
 
+**Optional (for Makefile)**
+- `make`
+
 **NOTE:** if you get errors about the `-A` flag being illegal for the mail command and are on a Debian based system, you require `mailutils`.
 
-Ensure the script has execute permissions with `chmod 700 pgpmail`.
+```shell
+# Install
+sudo make install
 
-Place the script somewhere in your $PATH (e.g. `/usr/local/bin/` or `~/.local/bin`) for installation.
-Otherwise source it with a relative path (e.g `./pgpmail`).
+# Uninstall
+sudo make uninstall
+```
 
 ## Usage
 
