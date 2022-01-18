@@ -4,33 +4,35 @@ pgpmail \- Encrypt attachments and sign checksums to email recipients using GPG 
 .SH SYNOPSIS
 .SY pgpmail 
 .OP -ces
-.OP -f SENDER
-.OP -a FILE\~ .\|.\|.
-.OP -t RECIPIENT
+.OP -f sender
+.RB [ \-a
+.IR file\~ .\|.\|.]
+.OP -t recipient
 .YS
 .SH DESCRIPTION
-A shell script using GPG/PGP to hash files for integrity, encrypt them, and email them to a recipient.
+.B pgpmail
+is a shell script using GPG/PGP to hash files for integrity, encrypt them, and email them to a recipient.
 .SH OPTIONS
-.PP
-.B -a FILE
+.TP
+.BI \-a " file"
 File to include in email as attachment
-.PP
-.B -c
+.TP
+.B \-c
 Include checksum of files in email
-.PP
-.B -e
+.TP
+.B \-e
 Encrypt files with recipient's GPG key
-.PP
-.B -f FROM
+.TP
+.BI \-f " from"
 Sender of email
-.PP
-.B -h
+.TP
+.B \-h
 Display this message and exit
-.PP
-.B -s
+.TP
+.B \-s
 Sign checksum with sender's GPG key
-.PP
-.B -t TO
+.TP
+.BI \-t " to"
 Recipient of email
 .SH EXAMPLE
 The following command will attach a file called `documents.zip' and the checksum of the files in an email to `manager@example.com'.
